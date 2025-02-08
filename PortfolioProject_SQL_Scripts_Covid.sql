@@ -1,24 +1,29 @@
+-- Verify CovidDeaths table has been populated after import from .xlsx file
+
 select *
-From [PortfolioProject]..CovidDeaths
-Where continent is not null
+from [PortfolioProject]..CovidDeaths
+--where continent is not null
 order by 3,4
 
---select *
---From [PortfolioProject]..CovidVaccinations
---order by 3,4
+
+-- Verify CovidVaccinations table has been populated after import from .xlsx file
+
+select *
+from [PortfolioProject]..CovidVaccinations
+order by 3,4
 
 -- Select Data that we are going to be using
 
 select [location], [date], [total_cases], [new_cases], [total_deaths], [population]
-From [PortfolioProject]..CovidDeaths
-Where continent is not null
+from [PortfolioProject]..CovidDeaths
+where continent is not null
 order by 1,2
 
 -- Looking at Total Cases vs Total Deaths
 
 select [location], [date], [total_cases], [total_deaths], 
 DeathPercentage = (total_deaths/total_cases)*100 
-From [PortfolioProject]..CovidDeaths
+from [PortfolioProject]..CovidDeaths
 where location like '%states%'
 and continent is not null
 order by 1,2
@@ -28,8 +33,8 @@ order by 1,2
 
 select [location], [date], [population], [total_cases], 
 InfectionPercentage = (total_cases/population)*100 
-From [PortfolioProject]..CovidDeaths
-Where continent is not null
+from [PortfolioProject]..CovidDeaths
+where continent is not null
 --where location like '%states%'
 order by 1,2
 
@@ -57,7 +62,6 @@ order by TotalDeathCount desc
 -- LET'S BREAK THINGS DOWN BY CONTINENT
 
 --Showing contintents with the highest death count per population
-
 
 select [continent],
 TotalDeathCount = max(cast(Total_deaths as int)) 
@@ -112,7 +116,11 @@ from PopvsVac
 
 -- TEMP TABLE
 
+-- Check if temp table exists and remove it before rebuilding...this allows us to make modifications to the table and rebuild as needed
+
 drop table if exists #PercentPopulationVaccinated
+
+-- Create the #PercentPopulationVaccinated temp table, single # for local temp (## for global temp)
 
 create table #PercentPopulationVaccinated
 (
@@ -124,6 +132,7 @@ New_vaccinations numeric,
 RollingPeopleVaccinated numeric
 )
 
+-- Populate the temp table with our data
 
 Insert into #PercentPopulationVaccinated
 select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
@@ -135,6 +144,8 @@ on dea.location = vac.location
 and dea.date = vac.date
 where dea.continent is not null
 order by 2,3
+
+-- Veriy data has been inserted into temp table, begin looking at ratio of rolling ppl vaxed per population percentages
 
 select *, (RollingPeopleVaccinated/Population)*100
 from #PercentPopulationVaccinated
@@ -152,6 +163,8 @@ on dea.location = vac.location
 and dea.date = vac.date
 where dea.continent is not null
 --order by 2,3
+
+-- Verify PercentagePopulationVaccinated is functional and populated with data
 
 select * 
 from PercentagePopulationVaccinated
